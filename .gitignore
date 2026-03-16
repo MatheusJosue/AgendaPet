@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Claude
+.claude/
+
 # Expo
 .expo/
 .expo-shared/

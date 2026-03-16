@@ -1,0 +1,71 @@
+ESTRUTURA INICIAL DO PROJETO – SAAS BANHO E TOSA
+
+1 — MVP (PRIMEIRO PRODUTO)
+
+Objetivo: Vender para 5–10 petshops.
+
+Funcionalidades:
+
+Empresa - cadastro empresa - login - plano ativo / bloqueado
+
+Clientes - nome tutor - telefone - nome pet - raça - peso
+
+Agendamento - data - hora - serviço (banho / tosa) - valor - status
+
+Dashboard - agenda diária - agenda semanal - agenda mensal - total
+faturado - quantidade de pets
+
+2 — ARQUITETURA
+
+Frontend React Native (Expo recomendado)
+
+Backend Node.js + NestJS
+
+Banco PostgreSQL
+
+Infra futura - API: Node - DB: Postgres - Auth: JWT - Storage: S3 (fotos
+pets futuramente)
+
+3 — ESTRUTURA DO BANCO (MVP)
+
+companies id name phone email plan_status created_at
+
+users id company_id name email password role
+
+customers id company_id tutor_name phone
+
+pets id customer_id name breed weight
+
+appointments id company_id pet_id service price date status created_at
+
+4 — TELAS DO APP
+
+-   Login
+-   Dashboard
+-   Agenda (calendário)
+-   Novo agendamento
+-   Lista de clientes
+-   Cadastro pet
+-   Financeiro simples
+
+5 — ROADMAP
+
+Semana 1 - nome - design banco - repo github - backend base
+
+Semana 2 - auth - CRUD clientes - CRUD pets
+
+Semana 3 - agenda - dashboard
+
+Semana 4 - deploy - 3 petshops piloto
+
+6 — PREÇO SAAS
+
+Sugestão:
+
+Plano único inicial R$39 / mês
+
+ou
+
+R$29 para primeiros clientes
+
+10 petshops = R$390 / mês recorrente
