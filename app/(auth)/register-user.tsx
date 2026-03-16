@@ -4,6 +4,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { Background } from '@/components/Background';
+import { colors, fontSize, glassStyle } from '@/theme';
 
 export default function RegisterUserScreen() {
   const { companyId } = useLocalSearchParams<{ companyId: string }>();
@@ -62,46 +64,81 @@ export default function RegisterUserScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Crie sua conta</Text>
-        <Text style={styles.subtitle}>Você será o administrador</Text>
+    <Background>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.emoji}>👤</Text>
+            <Text style={styles.title}>Crie sua conta</Text>
+            <Text style={styles.subtitle}>Você será o administrador</Text>
+          </View>
 
-        <Input
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="seu@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <View style={styles.glassCard}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="seu@email.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-        <Input
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Mínimo 6 caracteres"
-          secureTextEntry
-        />
+            <Input
+              label="Senha"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Mínimo 6 caracteres"
+              secureTextEntry
+            />
 
-        <Input
-          label="Confirmar senha"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          placeholder="Digite a senha novamente"
-          secureTextEntry
-          error={error}
-        />
+            <Input
+              label="Confirmar senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Digite a senha novamente"
+              secureTextEntry
+              error={error}
+            />
 
-        <Button title="Criar conta" onPress={handleRegister} loading={loading} />
-      </View>
-    </SafeAreaView>
+            <Button title="Criar conta" onPress={handleRegister} loading={loading} />
+          </View>
+        </View>
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 32 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  emoji: {
+    fontSize: 50,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: fontSize.xxl,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  glassCard: {
+    ...glassStyle,
+    padding: 24,
+  },
 });

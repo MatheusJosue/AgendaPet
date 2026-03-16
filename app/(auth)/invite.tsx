@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { Background } from '@/components/Background';
+import { colors, fontSize, glassStyle } from '@/theme';
 
 export default function InviteScreen() {
   const [code, setCode] = useState('');
@@ -46,29 +48,64 @@ export default function InviteScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Bem-vindo ao AgendaPet</Text>
-        <Text style={styles.subtitle}>Digite o código de convite da sua empresa</Text>
+    <Background>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.emoji}>🏠</Text>
+            <Text style={styles.title}>Bem-vindo ao AgendaPet</Text>
+            <Text style={styles.subtitle}>Digite o código de convite da sua empresa</Text>
+          </View>
 
-        <Input
-          label="Código de convite"
-          value={code}
-          onChangeText={setCode}
-          placeholder="Ex: PET2024"
-          autoCapitalize="characters"
-          error={error}
-        />
+          <View style={styles.glassCard}>
+            <Input
+              label="Código de convite"
+              value={code}
+              onChangeText={setCode}
+              placeholder="Ex: PET2024"
+              autoCapitalize="characters"
+              error={error}
+            />
 
-        <Button title="Continuar" onPress={handleContinue} loading={loading} />
-      </View>
-    </SafeAreaView>
+            <Button title="Continuar" onPress={handleContinue} loading={loading} />
+          </View>
+        </View>
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 28, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 32 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  emoji: {
+    fontSize: 50,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: fontSize.xxl,
+    fontWeight: 'bold',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: fontSize.md,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  glassCard: {
+    ...glassStyle,
+    padding: 24,
+  },
 });
