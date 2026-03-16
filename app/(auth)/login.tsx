@@ -4,6 +4,8 @@ import { router } from 'expo-router';
 import { Input } from '@/components/Input';
 import { Button } from '@/components/Button';
 import { supabase } from '@/lib/supabase';
+import { Background } from '@/components/Background';
+import { colors, fontSize, glassStyle } from '@/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -53,47 +55,91 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>AgendaPet</Text>
-        <Text style={styles.subtitle}>Faça login para continuar</Text>
+    <Background>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.logo}>🐾</Text>
+            <Text style={styles.title}>AgendaPet</Text>
+            <Text style={styles.subtitle}>Gestão de petshop simplificada</Text>
+          </View>
 
-        <Input
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          placeholder="seu@email.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+          <View style={styles.form}>
+            <View style={styles.glassCard}>
+              <Input
+                label="Email"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="seu@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
 
-        <Input
-          label="Senha"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Sua senha"
-          secureTextEntry
-          error={error}
-        />
+              <Input
+                label="Senha"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Sua senha"
+                secureTextEntry
+                error={error}
+              />
 
-        <Button title="Entrar" onPress={handleLogin} loading={loading} />
+              <Button title="Entrar" onPress={handleLogin} loading={loading} />
 
-        <TouchableOpacity
-          style={styles.link}
-          onPress={() => router.push('/(auth)/invite')}
-        >
-          <Text style={styles.linkText}>Não tem conta? Solicite um convite</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+              <TouchableOpacity
+                style={styles.link}
+                onPress={() => router.push('/(auth)/invite')}
+              >
+                <Text style={styles.linkText}>Não tem conta? Solicite um convite</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, padding: 24, justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: 'bold', textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 32 },
-  link: { marginTop: 24, alignItems: 'center' },
-  linkText: { color: '#4CAF50', fontSize: 14 },
+  container: {
+    flex: 1,
+  },
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  logo: {
+    fontSize: 60,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: fontSize.title,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: fontSize.lg,
+    color: colors.textSecondary,
+  },
+  form: {
+    width: '100%',
+  },
+  glassCard: {
+    ...glassStyle,
+    padding: 24,
+  },
+  link: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  linkText: {
+    color: colors.textSecondary,
+    fontSize: fontSize.sm,
+  },
 });

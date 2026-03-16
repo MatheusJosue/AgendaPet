@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase, Appointment } from '@/lib/supabase';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { Loading } from '@/components/Loading';
+import { Background } from '@/components/Background';
+import { colors, fontSize, glassStyle } from '@/theme';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
@@ -69,51 +71,84 @@ export default function DashboardScreen() {
   if (loading) return <Loading />;
 
   return (
-    <View style={styles.container}>
-      {/* Stats Header */}
-      <View style={styles.statsContainer}>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Hoje</Text>
+    <Background>
+      <View style={styles.container}>
+        {/* Stats Header */}
+        <View style={styles.glassCard}>
+          <View style={styles.statsContainer}>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{stats.total}</Text>
+              <Text style={styles.statLabel}>Hoje</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>{stats.completed}</Text>
+              <Text style={styles.statLabel}>Concluídos</Text>
+            </View>
+            <View style={styles.stat}>
+              <Text style={styles.statValue}>R$ {stats.revenue.toFixed(0)}</Text>
+              <Text style={styles.statLabel}>Faturado</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>{stats.completed}</Text>
-          <Text style={styles.statLabel}>Concluídos</Text>
-        </View>
-        <View style={styles.stat}>
-          <Text style={styles.statValue}>R$ {stats.revenue.toFixed(0)}</Text>
-          <Text style={styles.statLabel}>Faturado</Text>
-        </View>
-      </View>
 
-      {/* Appointments List */}
-      <FlatList
-        data={appointments}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <AppointmentCard appointment={item} />}
-        contentContainerStyle={styles.list}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4CAF50']} />
-        }
-        ListEmptyComponent={
-          <Text style={styles.empty}>Nenhum agendamento para hoje</Text>
-        }
-      />
-    </View>
+        {/* Appointments List */}
+        <FlatList
+          data={appointments}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <AppointmentCard appointment={item} />}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.accent]} />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.empty}>Nenhum agendamento para hoje</Text>
+            </View>
+          }
+        />
+      </View>
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  glassCard: {
+    ...glassStyle,
+    padding: 20,
+    marginBottom: 16,
+  },
   statsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#4CAF50',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
   },
-  stat: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  statLabel: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
-  list: { paddingVertical: 8 },
-  empty: { textAlign: 'center', color: '#999', marginTop: 40 },
+  stat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: fontSize.xxl,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statLabel: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  list: {
+    paddingBottom: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 60,
+  },
+  empty: {
+    color: colors.textMuted,
+    fontSize: fontSize.lg,
+  },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
+import { colors, fontSize, glassStyle } from '@/theme';
 
 interface ButtonProps {
   title: string;
@@ -21,7 +22,7 @@ export function Button({ title, onPress, loading, variant = 'primary', style }: 
       disabled={loading}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={colors.text} />
       ) : (
         <Text style={[styles.text, variant === 'secondary' && styles.secondaryText]}>
           {title}
@@ -33,22 +34,23 @@ export function Button({ title, onPress, loading, variant = 'primary', style }: 
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.primary,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
+    ...glassStyle,
   },
   secondary: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#4CAF50',
+    borderColor: colors.primary,
   },
   text: {
-    color: '#fff',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   secondaryText: {
-    color: '#4CAF50',
+    color: colors.primary,
   },
 });
