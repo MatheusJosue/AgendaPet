@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,9 @@ import {
   Platform,
   TouchableOpacity,
   Modal,
+  Alert,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
@@ -46,9 +47,33 @@ const maskPrice = (value: string) => {
     : `,${cents}`;
 };
 
-export default function NewAppointmentScreen() {
+interface Appointment {
+  id: string;
+  client_id?: string;
+  pet_id?: string;
+  service: string;
+  price: number;
+  date: string;
+  status: string;
+  notes?: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
+}
+
+interface Pet {
+  id: string;
+  name: string;
+}
+
+export default function EditAppointmentScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [showDateModal, setShowDateModal] = useState(false);
   const [showTimeModal, setShowTimeModal] = useState(false);
@@ -60,8 +85,8 @@ export default function NewAppointmentScreen() {
   const [tempMinute, setTempMinute] = useState(0);
 
   // Client and Pet selection
-  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
-  const [selectedPet, setSelectedPet] = useState<{ id: string; name: string } | null>(null);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedPet, setSelectedPet] = useState<Pet | null>(null);
   const [showClientPicker, setShowClientPicker] = useState(false);
   const [showPetPicker, setShowPetPicker] = useState(false);
 
@@ -71,6 +96,70 @@ export default function NewAppointmentScreen() {
     time: "",
     notes: "",
   });
+
+  useEffect(() => {
+    if (id) loadAppointment();
+  }, [id]);
+
+  const loadAppointment = async () => {
+    try {
+      const { data: appointment, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error || !appointment) {
+        Alert.alert('Erro', 'Agendamento não encontrado');
+        router.back();
+        return;
+      }
+
+      // Load client and pet if exists
+      if (appointment.client_id) {
+        const { data: client } = await supabase
+          .from('clients')
+          .select('id, name')
+          .eq('id', appointment.client_id)
+          .single();
+        if (client) setSelectedClient(client);
+      }
+
+      if (appointment.pet_id) {
+        const { data: pet } = await supabase
+          .from('pets')
+          .select('id, name')
+          .eq('id', appointment.pet_id)
+          .single();
+        if (pet) setSelectedPet(pet);
+      }
+
+      // Parse services
+      const services = appointment.service ? appointment.service.split(',') : [];
+      setSelectedServices(services);
+
+      // Parse date
+      const dateObj = new Date(appointment.date);
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      const hours = String(dateObj.getHours()).padStart(2, '0');
+      const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+
+      setForm({
+        price: appointment.price.toString().replace('.', ','),
+        date: `${day}/${month}/${year}`,
+        time: `${hours}:${minutes}`,
+        notes: appointment.notes || '',
+      });
+    } catch (e) {
+      console.error('Error loading appointment:', e);
+      Alert.alert('Erro', 'Falha ao carregar agendamento');
+      router.back();
+    } finally {
+      setInitialLoading(false);
+    }
+  };
 
   const toggleService = (serviceId: string) => {
     setSelectedServices((prev) =>
@@ -116,30 +205,14 @@ export default function NewAppointmentScreen() {
   };
 
   const handleSave = async () => {
-    if (!selectedClient) {
-      setErrorMessage('Selecione um cliente');
-      setShowErrorModal(true);
-      return;
-    }
-
-    if (!selectedPet) {
-      setErrorMessage('Selecione um pet');
-      setShowErrorModal(true);
-      return;
-    }
-
-    if (
-      !form.date.trim() ||
-      !form.time.trim() ||
-      !form.price.trim()
-    ) {
-      setErrorMessage('Preencha todos os campos obrigatórios');
-      setShowErrorModal(true);
-      return;
-    }
-
     if (selectedServices.length === 0) {
       setErrorMessage('Selecione pelo menos um serviço');
+      setShowErrorModal(true);
+      return;
+    }
+
+    if (!form.date.trim() || !form.time.trim() || !form.price.trim()) {
+      setErrorMessage('Preencha todos os campos obrigatórios');
       setShowErrorModal(true);
       return;
     }
@@ -155,42 +228,38 @@ export default function NewAppointmentScreen() {
     setLoading(true);
 
     try {
-      const { data: userData } = await supabase
-        .from("users")
-        .select("company_id")
-        .eq("id", user?.id)
-        .single();
-
-      if (!userData?.company_id) {
-        throw new Error("Empresa não encontrada");
-      }
-
       const dateParts = form.date.split("/");
       const dateObj = new Date(
         `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}T${form.time}:00`,
       );
 
-      const { error } = await supabase.from("appointments").insert({
-        company_id: userData.company_id,
-        client_id: selectedClient.id,
-        pet_id: selectedPet.id,
+      const { error } = await supabase.from("appointments").update({
+        client_id: selectedClient?.id || null,
+        pet_id: selectedPet?.id || null,
         service: selectedServices.join(","),
         price,
         date: dateObj.toISOString(),
-        status: "scheduled",
         notes: form.notes.trim() || null,
-      });
+      }).eq('id', id);
 
       if (error) throw error;
 
       setShowSuccessModal(true);
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao criar agendamento');
+      setErrorMessage(err.message || 'Erro ao atualizar agendamento');
       setShowErrorModal(true);
     } finally {
       setLoading(false);
     }
   };
+
+  if (initialLoading) {
+    return (
+      <View style={styles.loading}>
+        <Text style={styles.loadingText}>Carregando...</Text>
+      </View>
+    );
+  }
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const months = [
@@ -215,6 +284,13 @@ export default function NewAppointmentScreen() {
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Editar Agendamento</Text>
+        </View>
+
         <View style={styles.card}>
           <Text style={styles.label}>Serviços *</Text>
           <View style={styles.servicesGrid}>
@@ -248,7 +324,7 @@ export default function NewAppointmentScreen() {
           </View>
 
           {/* Client Picker */}
-          <Text style={styles.label}>Cliente *</Text>
+          <Text style={styles.label}>Cliente</Text>
           <TouchableOpacity
             style={styles.pickerButton}
             onPress={() => setShowClientPicker(true)}
@@ -262,7 +338,7 @@ export default function NewAppointmentScreen() {
           {/* Pet Picker */}
           {selectedClient && (
             <>
-              <Text style={styles.label}>Pet *</Text>
+              <Text style={styles.label}>Pet</Text>
               <TouchableOpacity
                 style={styles.pickerButton}
                 onPress={() => setShowPetPicker(true)}
@@ -319,7 +395,7 @@ export default function NewAppointmentScreen() {
           />
 
           <Button
-            title="Salvar Agendamento"
+            title="Salvar Alterações"
             onPress={handleSave}
             loading={loading}
           />
@@ -342,7 +418,6 @@ export default function NewAppointmentScreen() {
         clientId={selectedClient?.id || null}
         onClose={() => setShowPetPicker(false)}
         onSelect={(pet) => setSelectedPet(pet)}
-        onAddNew={() => router.push(`/client/${selectedClient?.id}`)}
       />
 
       {/* Date Picker Modal */}
@@ -355,12 +430,6 @@ export default function NewAppointmentScreen() {
           />
           <View style={styles.modalContent}>
             <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconContainer}>
-                <Ionicons name="calendar" size={24} color="#fff" />
-              </View>
-              <Text style={styles.modalTitle}>Selecionar Data</Text>
-            </View>
             <View style={styles.pickerRow}>
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>Dia</Text>
@@ -447,12 +516,6 @@ export default function NewAppointmentScreen() {
           />
           <View style={styles.modalContent}>
             <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <View style={styles.modalIconContainer}>
-                <Ionicons name="time" size={24} color="#fff" />
-              </View>
-              <Text style={styles.modalTitle}>Selecionar Horário</Text>
-            </View>
             <View style={styles.pickerRow}>
               <View style={styles.pickerColumn}>
                 <Text style={styles.pickerLabel}>Hora</Text>
@@ -529,15 +592,15 @@ export default function NewAppointmentScreen() {
               <Ionicons name="checkmark-circle" size={64} color={colors.accent} />
             </View>
             <Text style={styles.feedbackTitle}>Sucesso!</Text>
-            <Text style={styles.feedbackMessage}>Agendamento criado com sucesso</Text>
+            <Text style={styles.feedbackMessage}>Agendamento atualizado com sucesso</Text>
             <TouchableOpacity
               style={styles.feedbackButton}
               onPress={() => {
                 setShowSuccessModal(false);
-                router.push('/(app)');
+                router.back();
               }}
             >
-              <Text style={styles.feedbackButtonText}>Voltar para Agenda</Text>
+              <Text style={styles.feedbackButtonText}>Voltar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -568,12 +631,17 @@ export default function NewAppointmentScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+  loadingText: { color: colors.textSecondary, fontSize: fontSize.md },
   backgroundGradient: { ...StyleSheet.absoluteFillObject, overflow: "hidden" },
   orb1: { position: "absolute", width: 280, height: 280, borderRadius: 140, backgroundColor: colors.primary, opacity: 0.15, top: -80, right: -60 },
   orb2: { position: "absolute", width: 200, height: 200, borderRadius: 100, backgroundColor: colors.secondary, opacity: 0.1, bottom: 150, left: -40 },
   orb3: { position: "absolute", width: 180, height: 180, borderRadius: 90, backgroundColor: colors.accent, opacity: 0.1, bottom: -50, right: 50 },
   keyboardView: { flex: 1 },
   content: { padding: spacing.lg },
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
+  backButton: { padding: spacing.sm, marginRight: spacing.sm },
+  title: { fontSize: fontSize.xl, fontWeight: 'bold', color: colors.text },
   card: { ...glassStyle, padding: spacing.lg },
   label: { fontSize: fontSize.sm, fontWeight: "600", marginBottom: spacing.sm, marginTop: spacing.md, color: colors.textSecondary },
   servicesGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginBottom: spacing.sm },
@@ -590,9 +658,6 @@ const styles = StyleSheet.create({
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalContent: { backgroundColor: colors.backgroundLight, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: spacing.lg, maxHeight: "60%" },
   modalHandle: { width: 40, height: 4, backgroundColor: colors.glassBorder, borderRadius: 2, alignSelf: 'center', marginBottom: spacing.md },
-  modalHeader: { alignItems: "center", marginBottom: spacing.lg },
-  modalIconContainer: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm },
-  modalTitle: { fontSize: fontSize.xl, fontWeight: "bold", color: colors.text, textAlign: "center" },
   pickerRow: { flexDirection: "row", gap: spacing.md },
   pickerColumn: { flex: 1 },
   pickerLabel: { fontSize: fontSize.sm, color: colors.textSecondary, textAlign: "center", marginBottom: spacing.sm },

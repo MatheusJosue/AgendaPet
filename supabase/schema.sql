@@ -128,7 +128,55 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE INDEX idx_appointments_company_date ON appointments(company_id, date);
 CREATE INDEX idx_users_company ON users(company_id);
 
--- Índices para busca
+-- Tabela clients
+CREATE TABLE IF NOT EXISTS clients (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  email TEXT,
+  cpf TEXT,
+  address TEXT,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela pets
+CREATE TABLE IF NOT EXISTS pets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  species TEXT NOT NULL CHECK (species IN ('cachorro', 'gato', 'outro')),
+  breed TEXT,
+  weight DECIMAL(5,2),
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- FK em appointments
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id);
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS pet_id UUID REFERENCES pets(id);
+
+CREATE INDEX IF NOT EXISTS idx_appointments_client_id ON appointments(client_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_pet_id ON appointments(pet_id);
+
+-- RLS para clients e pets
+ALTER TABLE clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE pets ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view company clients" ON clients;
+CREATE POLICY "Users can view company clients" ON clients
+  FOR ALL USING (company_id = (auth.jwt()->>'company_id')::uuid);
+
+DROP POLICY IF EXISTS "Users can view client pets" ON pets;
+CREATE POLICY "Users can view client pets" ON pets
+  FOR ALL USING (client_id IN (
+    SELECT id FROM clients WHERE company_id = (auth.jwt()->>'company_id')::uuid
+  ));
+
+-- Índices para busca rápida
 CREATE INDEX IF NOT EXISTS idx_clients_company_name ON clients(company_id, name);
 CREATE INDEX IF NOT EXISTS idx_clients_company_phone ON clients(company_id, phone);
 CREATE INDEX IF NOT EXISTS idx_clients_company_email ON clients(company_id, email);
