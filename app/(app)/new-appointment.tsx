@@ -342,7 +342,7 @@ export default function NewAppointmentScreen() {
         clientId={selectedClient?.id || null}
         onClose={() => setShowPetPicker(false)}
         onSelect={(pet) => setSelectedPet(pet)}
-        onAddNew={() => router.push(`/client/${selectedClient?.id}`)}
+        onAddNew={() => router.push(`/screens/client/${selectedClient?.id}`)}
       />
 
       {/* Date Picker Modal */}

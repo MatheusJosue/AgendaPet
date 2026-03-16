@@ -88,7 +88,7 @@ export default function ClientsScreen() {
       name={item.name}
       phone={item.phone}
       petsCount={0}
-      onPress={() => router.push(`/(app)/client/${item.id}`)}
+      onPress={() => router.push(`/(app)/screens/client/${item.id}`)}
     />
   );
 
@@ -148,7 +148,7 @@ export default function ClientsScreen() {
 
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => router.push('/(app)/new-client')}
+        onPress={() => router.push('/(app)/screens/new-client')}
       >
         <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
