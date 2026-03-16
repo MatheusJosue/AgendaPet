@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color={colors.text} />
+            <Ionicons name="paw" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
